@@ -1,14 +1,11 @@
 
 <p align="left">
-  <img src="https://github.com/clastix/capsule/actions/workflows/ci.yml/badge.svg"/>
-  <img src="https://img.shields.io/github/license/clastix/capsule"/>
-  <img src="https://img.shields.io/github/go-mod/go-version/clastix/capsule"/>
-  <a href="https://github.com/clastix/capsule/releases">
-    <img src="https://img.shields.io/github/v/release/clastix/capsule"/>
-  </a>
-  <a href="https://charmhub.io/capsule-k8s">
-    <img src="https://charmhub.io/capsule-k8s/badge.svg"/>
-  </a>
+  <a href="https://bestpractices.coreinfrastructure.org/projects/5601"><img src="https://bestpractices.coreinfrastructure.org/projects/5601/badge.svg" alt="OpenSSF Best Practices"/></a>
+  <a href="https://github.com/clastix/capsule/blob/master/LICENSE"><img src="https://img.shields.io/github/license/clastix/capsule" alt="License"/></a>
+  <a href="https://github.com/clastix/capsule/blob/master/go.mod"><img src="https://img.shields.io/github/go-mod/go-version/clastix/capsule" alt="Go Mod Version"/></a>
+  <a href="https://github.com/clastix/capsule/releases"><img src="https://img.shields.io/github/v/release/clastix/capsule" alt="Release"/></a>
+  <a href="https://charmhub.io/capsule-k8s"><img src="https://charmhub.io/capsule-k8s/badge.svg" alt="Charmhub"/></a>
+  <a href="https://slack.k8s.io/"><img src="https://img.shields.io/badge/slack-%23capsule-blue.svg?logo=slack" alt="Slack"/></a>
 </p>
 
 <p align="center">
@@ -17,55 +14,74 @@
 
 ---
 
-**Join the community** on the [#capsule](https://kubernetes.slack.com/archives/C03GETTJQRL) channel in the [Kubernetes Slack](https://slack.k8s.io/).
-
 # Kubernetes multi-tenancy made easy
 
-**Capsule** implements a multi-tenant and policy-based environment in your Kubernetes cluster. It is designed as a micro-services-based ecosystem with the minimalist approach, leveraging only on upstream Kubernetes.
+**Capsule** implements a multi-tenant and policy-based environment in your Kubernetes cluster. It is designed as a microservice-based ecosystem with the minimalist approach, leveraging only on upstream Kubernetes.
 
-# What's the problem with the current status?
+# Addressing Multi-Tenancy Challenges in Kubernetes
 
-Kubernetes introduces the _Namespace_ object type to create logical partitions of the cluster as isolated *slices*. However, implementing advanced multi-tenancy scenarios, it soon becomes complicated because of the flat structure of Kubernetes namespaces and the impossibility to share resources among namespaces belonging to the same tenant. To overcome this, cluster admins tend to provision a dedicated cluster for each groups of users, teams, or departments. As an organization grows, the number of clusters to manage and keep aligned becomes an operational nightmare, described as the well known phenomena of the _clusters sprawl_.
+While Kubernetes Namespaces offer a way to create logical partitions, advanced multi-tenancy scenarios become complex due to their flat structure and inability to share resources effectively across namespaces of the same tenant. This often leads to "cluster sprawl" – an operational nightmare of managing numerous dedicated clusters.
 
-# Entering Capsule
-
-Capsule takes a different approach. In a single cluster, the Capsule Controller aggregates multiple namespaces in a lightweight abstraction called _Tenant_, basically a grouping of Kubernetes Namespaces. Within each tenant, users are free to create their namespaces and share all the assigned resources. 
-
-On the other side, the Capsule Policy Engine keeps the different tenants isolated from each other. _Network and Security Policies_, _Resource Quota_, _Limit Ranges_, _RBAC_, and other policies defined at the tenant level are automatically inherited by all the namespaces in the tenant. Then users are free to operate their tenants in autonomy, without the intervention of the cluster administrator. 
+Capsule offers a solution by introducing the "Tenant" concept, a grouping of Kubernetes Namespaces. Within a single cluster, Capsule allows users to create their namespaces and share resources within their Tenant. The Capsule Policy Engine ensures isolation between Tenants, automatically inheriting policies like Network and Security Policies, Resource Quotas, and RBAC to all namespaces within a Tenant. This empowers users to manage their Tenants autonomously, reducing the need for cluster administrator intervention.
 
 # Features
 
-## Self-Service
+- **Self-Service**: Empowers developers to self-provision cluster resources within defined boundaries.
+- **Preventing Clusters Sprawl**: Enables sharing a single cluster across multiple teams or departments, saving operational effort.
+- **Governance**: Leverages Kubernetes Admission Controllers to enforce security best practices and policy requirements.
+- **Resource Control**: Provides control over resource consumption by users, preventing overuse.
+- **Native Experience**: Delivers multi-tenancy with a native Kubernetes experience, avoiding extra management layers or custom binaries.
+- **GitOps ready**: Capsule is fully declarative and compatible with GitOps workflows.
+- **Bring your own device (BYOD)**: Enables administrators to assign dedicated sets of cluster resources (such as compute, storage, and network) directly to tenants. This helps prevent the 'noisy neighbor' problem, ensuring that each tenant has access to their allocated resources without interference from others.
 
-Leave developers the freedom to self-provision their cluster resources according to the assigned boundaries.
+# Quick Start
 
-## Preventing Clusters Sprawl
+This section provides a brief guide to get Capsule up and running on your Kubernetes cluster.
 
-Share a single cluster with multiple teams, groups of users, or departments by saving operational and management efforts.
+**Prerequisites:**
 
-## Governance
+*   A running Kubernetes cluster (v1.16+).
+*   `helm` CLI installed.
+*   `kubectl` CLI installed and configured to communicate with your cluster.
 
-Leverage Kubernetes Admission Controllers to enforce the industry security best practices and meet policy requirements.
+**Installation:**
 
-## Resources Control
+Capsule is typically installed using Helm. Please refer to the official Capsule documentation or [ArtifactHub](https://artifacthub.io/packages/helm/projectcapsule/capsule) for the latest Helm chart repository URL and detailed installation instructions.
 
-Take control of the resources consumed by users while preventing them to overtake.
+**Creating a Tenant:**
 
-## Native Experience
+1.  Create a file named `tenant-oil.yaml` with the following content:
+    ```yaml
+    apiVersion: capsule.clastix.io/v1beta2
+    kind: Tenant
+    metadata:
+      name: oil
+    spec:
+      owners:
+      - kind: User
+        name: alice
+      - kind: Group
+        name: engineering
+    ```
+2.  Apply the Tenant manifest:
+    ```bash
+    kubectl apply -f tenant-oil.yaml
+    ```
 
-Provide multi-tenancy with a native Kubernetes experience without introducing additional management layers, plugins, or customized binaries.
+This creates a Tenant named `oil` managed by user `alice` and group `engineering`. User `alice` and members of the `engineering` group can now create namespaces and other resources within this Tenant, subject to policies defined by the administrator.
 
-## GitOps ready
-
-Capsule is completely declarative and GitOps ready.
-
-## Bring your own device (BYOD)
-
-Assign to tenants a dedicated set of compute, storage, and network resources and avoid the noisy neighbors' effect.
+For more advanced configurations and detailed information, please refer to the full documentation.
 
 # Documentation
 
-Please, check the project [documentation](https://capsule.clastix.io) for the cool things you can do with Capsule.
+Please check the project [documentation](https://capsule.clastix.io) for the cool things you can do with Capsule. Key topics covered include:
+
+*   **Overview**: In-depth explanation of Capsule's architecture, core concepts, and benchmarks.
+*   **Operating Capsule**: Guides for installation (including quickstart and upgrades), authentication, monitoring, backup/restore, Pod Security, and troubleshooting.
+*   **Tenants**: Detailed information on managing Tenants, including permissions, namespace management, resource quotas, policy enforcement, and replications.
+*   **Capsule Proxy**: Instructions for installing and configuring the Capsule Proxy, integrations with tools like Kubernetes Dashboard and Lens, and API reference.
+*   **Guides**: Practical tutorials for common use cases, such as migrating namespaces across tenants and using Capsule with Flux for GitOps.
+*   **API Reference**: Comprehensive reference for the Capsule API.
 
 # Contributions
 
@@ -75,7 +91,7 @@ Capsule is Open Source with Apache 2 license and any contribution is welcome.
 
 ### Chart Linting
 
-The chart is linted with [ct](https://github.com/helm/chart-testing). You can run the linter locally with this command:
+The Helm chart is linted with [ct](https://github.com/helm/chart-testing). You can run the linter locally with this command:
 
 ```
 make helm-lint
@@ -83,7 +99,7 @@ make helm-lint
 
 ### Chart Documentation
 
-The documentation for each chart is done with [helm-docs](https://github.com/norwoodj/helm-docs). This way we can ensure that values are consistent with the chart documentation. Run this anytime you make changes to a `values.yaml` file:
+The documentation for the Helm chart is generated using [helm-docs](https://github.com/norwoodj/helm-docs). This ensures that the `values.yaml` file is consistent with the chart's documentation. Run this command whenever you make changes to a `values.yaml` file:
 
 ```
 make helm-docs
@@ -103,22 +119,22 @@ You can find how the Capsule project is governed [here](https://capsule.clastix.
 
 ## Maintainers
 
-Please, refer to the maintainers file available [here](.github/maintainers.yaml).
+Please refer to the maintainers file available [here](.github/maintainers.yaml).
 
 # FAQ
 
 - Q. How to pronounce Capsule?
 
-  A. It should be pronounced as `/ˈkæpsjuːl/`.
+  A. It is pronounced as `/ˈkæpsjuːl/`.
 
 - Q. Is it production grade?
 
-  A. Although under frequent development and improvements, Capsule is ready to be used in production environments as currently, people are using it in public and private deployments. Check out the [release](https://github.com/clastix/capsule/releases) page for a detailed list of available versions.
+  A. Although Capsule is under active development with frequent improvements, it is production-ready. Many organizations are using it in public and private deployments. Check out the [release](https://github.com/clastix/capsule/releases) page for a detailed list of available versions.
 
 - Q. Does it work with my Kubernetes XYZ distribution?
 
-  A. We tested Capsule with vanilla Kubernetes 1.16+ on private environments and public clouds. We expect it to work smoothly on any other Kubernetes distribution. Please, let us know if you find it doesn't.
+  A. Capsule has been tested with vanilla Kubernetes 1.16+ on both private and public cloud environments. We expect it to work smoothly on any other Kubernetes distribution. Please let us know if you encounter any compatibility issues.
 
 - Q. Do you provide commercial support?
 
-  A. Yes, we're available to help and provide commercial support. [Clastix](https://clastix.io) is the company behind Capsule. Please, contact us for a quote. 
+  A. Yes, Clastix, the company behind Capsule, offers commercial support. Please contact us for a quote. 
